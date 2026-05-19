@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختبار علوم - الصف السابع</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase compat (يعمل على جميع المتصفحات بدون module) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Arial,sans-serif}
+body{background:#eef2f7;direction:rtl;min-height:100vh}
+.page{display:none;min-height:100vh}
+#pgHome{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d3b6e,#1a7abf);padding:20px}
+.home-box{background:#fff;border-radius:24px;padding:44px 36px;max-width:460px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.logo{font-size:54px;margin-bottom:16px}
+.home-box h1{color:#0d3b6e;font-size:19px;line-height:1.5;margin-bottom:8px}
+.home-box p{color:#777;font-size:13px;margin-bottom:32px}
+.btn-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-blue{background:#1a7abf;color:#fff;border:none;padding:14px 32px;border-radius:14px;font-size:15px;font-weight:bold;cursor:pointer}
+.btn-purple{background:#7b3fa0;color:#fff;border:none;padding:14px 32px;border-radius:14px;font-size:15px;font-weight:bold;cursor:pointer}
+#pgStudent{background:#eef2f7;padding:20px}
+.form-card{max-width:500px;margin:0 auto;background:#fff;border-radius:20px;padding:30px;box-shadow:0 8px 30px rgba(0,0,0,.1)}
+.form-head{text-align:center;border-bottom:2px solid #e4eaf5;padding-bottom:18px;margin-bottom:22px}
+.form-head h2{color:#0d3b6e;font-size:15px;line-height:1.5;margin-bottom:4px}
+.form-head p{color:#999;font-size:12px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.info-cell{background:#f4f7fd;border-radius:10px;padding:12px;text-align:center}
+.info-cell small{display:block;color:#999;font-size:11px;margin-bottom:3px}
+.info-cell b{color:#0d3b6e;font-size:13px}
+.fgrp{margin-bottom:16px}
+.fgrp label{display:block;font-size:13px;font-weight:bold;color:#333;margin-bottom:7px}
+.fgrp select{width:100%;padding:11px 14px;border:2px solid #dce4f0;border-radius:10px;font-size:14px;color:#333;outline:none;background:#fff;direction:rtl}
+.fgrp select:focus{border-color:#1a7abf}
+.btn-green{width:100%;background:#20a060;color:#fff;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:6px}
+.btn-green:disabled{background:#bbb;cursor:not-allowed}
+.btn-gray{width:100%;background:#888;color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;cursor:pointer;margin-top:10px}
+#pgQuiz{background:#eef2f7}
+.q-header{background:linear-gradient(135deg,#0d3b6e,#1a7abf);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:50}
+.q-meta{display:flex;justify-content:space-between;align-items:center;max-width:720px;margin:0 auto}
+.q-name{font-size:13px;font-weight:bold}
+.timer{background:rgba(255,255,255,.2);padding:8px 20px;border-radius:20px;font-size:18px;font-weight:bold;letter-spacing:2px;font-family:monospace}
+.timer.red{background:rgba(200,30,30,.85)}
+.prog-bar{max-width:720px;margin:8px auto 0;background:rgba(255,255,255,.25);height:5px;border-radius:3px}
+.prog-fill{height:100%;background:#2edb7a;border-radius:3px;transition:width .3s}
+.prog-txt{max-width:720px;margin:5px auto 0;font-size:12px;color:rgba(255,255,255,.8);text-align:right}
+.q-body{max-width:720px;margin:20px auto;padding:0 14px}
+.q-card{background:#fff;border-radius:16px;padding:24px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.q-tag{background:#ddeeff;color:#0d5a9e;font-size:11px;font-weight:bold;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px}
+.q-unit{font-size:11px;color:#aaa;margin-bottom:10px}
+.q-txt{font-size:15px;color:#222;line-height:1.75;font-weight:bold;margin-bottom:16px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border:2px solid #e4e4e4;border-radius:12px;cursor:pointer;font-size:14px;color:#333}
+.opt:hover{border-color:#1a7abf;background:#f0f7ff}
+.opt.picked{border-color:#1a7abf;background:#e4f0ff}
+.opt-lbl{min-width:28px;height:28px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:#555;flex-shrink:0}
+.opt.picked .opt-lbl{background:#1a7abf;color:#fff}
+.submit-wrap{max-width:720px;margin:0 auto 30px;padding:0 14px}
+.btn-submit{width:100%;background:#20a060;color:#fff;border:none;padding:17px;border-radius:14px;font-size:17px;font-weight:bold;cursor:pointer}
+#pgResult{background:#eef2f7;padding:20px}
+.res-wrap{max-width:720px;margin:0 auto}
+.res-card{background:#fff;border-radius:20px;padding:30px;margin-bottom:18px;box-shadow:0 8px 28px rgba(0,0,0,.09);text-align:center}
+.circle{width:150px;height:150px;border-radius:50%;margin:0 auto 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:36px;font-weight:bold;border:9px solid}
+.c-e{border-color:#20a060;color:#20a060;background:#f0fff8}
+.c-g{border-color:#1a7abf;color:#1a7abf;background:#f0f8ff}
+.c-a{border-color:#e8a020;color:#e8a020;background:#fffaf0}
+.c-f{border-color:#d93030;color:#d93030;background:#fff5f5}
+.res-grade{font-size:17px;font-weight:bold;margin-bottom:8px}
+.res-msg{font-size:13px;color:#777}
+.fb-card{background:#fff;border-radius:20px;padding:28px;margin-bottom:18px;box-shadow:0 8px 28px rgba(0,0,0,.09)}
+.fb-head{font-size:15px;font-weight:bold;color:#0d3b6e;border-bottom:2px solid #e4eaf5;padding-bottom:12px;margin-bottom:16px}
+.fb-item{margin-bottom:14px;padding:14px;border-radius:12px;border-right:4px solid}
+.fb-ok{background:#f0fff8;border-color:#20a060}
+.fb-no{background:#fff5f5;border-color:#d93030}
+.fb-q{font-size:13px;font-weight:bold;color:#333;margin-bottom:8px}
+.fb-a{font-size:12px;margin-top:4px;line-height:1.6}
+.wrong-a{color:#d93030}
+.right-a{color:#20a060}
+#pgLogin{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#4a1070,#9b3dbf);padding:20px}
+.login-box{background:#fff;border-radius:20px;padding:40px;max-width:350px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+.login-box h2{color:#6a20a0;margin-bottom:8px}
+.login-box p{color:#aaa;font-size:13px;margin-bottom:24px}
+.pw-input{width:100%;padding:14px;border:2px solid #ddd;border-radius:10px;font-size:20px;text-align:center;letter-spacing:6px;outline:none;direction:ltr;margin-bottom:14px}
+.pw-input:focus{border-color:#9b3dbf}
+.btn-login{width:100%;background:#7b3fa0;color:#fff;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
+.login-err{color:#d93030;font-size:13px;margin-top:10px;min-height:18px}
+#pgTeacher{background:#eef2f7}
+.t-header{background:linear-gradient(135deg,#4a1070,#9b3dbf);color:#fff;padding:20px;text-align:center}
+.t-header h2{font-size:18px}
+.t-header p{font-size:12px;opacity:.85;margin-top:4px}
+.t-body{max-width:980px;margin:20px auto;padding:0 15px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:#fff;border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.stat-n{font-size:34px;font-weight:bold;color:#0d3b6e}
+.stat-l{font-size:12px;color:#999;margin-top:4px}
+.act-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.btn-xl{background:#20a060;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer}
+.btn-rd{background:#c0392b;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer}
+.btn-dk{background:#666;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;cursor:pointer}
+.btn-rf{background:#1a7abf;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;cursor:pointer}
+.tbl-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 14px rgba(0,0,0,.07);overflow-x:auto}
+.tbl-box h3{color:#0d3b6e;margin-bottom:14px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+thead th{background:#0d3b6e;color:#fff;padding:11px 9px;text-align:right}
+tbody tr:nth-child(even){background:#f6f9ff}
+tbody tr:hover{background:#e8f0fb}
+tbody td{padding:10px 9px;border-bottom:1px solid #eef;color:#333}
+.bdg{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;display:inline-block}
+.be{background:#d4f5e3;color:#0d7a40}
+.bg{background:#d4e8fb;color:#0d4a8e}
+.ba{background:#fef2d4;color:#8a600a}
+.bf{background:#fde0e0;color:#8e1a1a}
+.btn-del{background:#fde0e0;color:#c0392b;border:1px solid #e0a0a0;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:12px}
+.no-res{text-align:center;color:#aaa;padding:40px;font-size:14px}
+.loading{text-align:center;color:#1a7abf;padding:40px;font-size:15px}
+.err-msg{text-align:center;color:#c0392b;padding:20px;font-size:14px;background:#fff5f5;border-radius:10px;margin:10px 0}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:18px;padding:32px;max-width:360px;width:90%;text-align:center}
+.modal-box h3{color:#c0392b;margin-bottom:10px;font-size:17px}
+.modal-box p{color:#555;margin-bottom:24px;font-size:14px;line-height:1.7}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+.btn-yes{background:#c0392b;color:#fff;border:none;padding:11px 28px;border-radius:9px;cursor:pointer;font-weight:bold;font-size:14px}
+.btn-no{background:#eee;color:#333;border:none;padding:11px 28px;border-radius:9px;cursor:pointer;font-size:14px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;padding:13px 30px;border-radius:30px;font-size:14px;z-index:9999;display:none;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div id="pgHome" class="page">
+  <div class="home-box">
+    <div class="logo">🏫</div>
+    <h1>مدرسة محمد بن حمد الشرقي للحلقة الثانية بنين</h1>
+    <p>اختبار مادة العلوم | الصف السابع | المعلم: عماد أبو حجيلة</p>
+    <div class="btn-row">
+      <button class="btn-blue" onclick="goPage('pgStudent')">🎓 دخول الطالب</button>
+      <button class="btn-purple" onclick="goPage('pgLogin')">👨‍🏫 دخول المعلم</button>
+    </div>
+  </div>
+</div>
+
+<div id="pgStudent" class="page">
+  <div class="form-card" style="margin-top:30px">
+    <div class="form-head">
+      <h2>🏫 مدرسة محمد بن حمد الشرقي للحلقة الثانية بنين</h2>
+      <p>اختر شعبتك ثم اسمك للبدء بالاختبار</p>
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><small>المادة</small><b>علوم</b></div>
+      <div class="info-cell"><small>الصف</small><b>السابع</b></div>
+      <div class="info-cell"><small>مدة الاختبار</small><b>35 دقيقة</b></div>
+      <div class="info-cell"><small>المعلم</small><b>عماد أبو حجيلة</b></div>
+    </div>
+    <div class="fgrp">
+      <label>الشعبة:</label>
+      <select id="selCls" onchange="loadNames()">
+        <option value="">-- اختر الشعبة --</option>
+        <option value="1">الشعبة 1</option>
+        <option value="2">الشعبة 2</option>
+        <option value="4">الشعبة 4</option>
+        <option value="5">الشعبة 5</option>
+      </select>
+    </div>
+    <div class="fgrp">
+      <label>اسم الطالب:</label>
+      <select id="selName" disabled onchange="document.getElementById('btnGo').disabled=!this.value">
+        <option value="">-- اختر الشعبة أولاً --</option>
+      </select>
+    </div>
+    <button class="btn-green" id="btnGo" disabled onclick="beginQuiz()">🚀 ابدأ الاختبار</button>
+    <button class="btn-gray" onclick="goPage('pgHome')">← رجوع</button>
+  </div>
+</div>
+
+<div id="pgQuiz" class="page">
+  <div class="q-header">
+    <div class="q-meta">
+      <span class="q-name" id="lblName"></span>
+      <span class="timer" id="clock">35:00</span>
+    </div>
+    <div class="prog-txt" id="progTxt">0 / 15 سؤال</div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0"></div></div>
+  </div>
+  <div class="q-body" id="qArea"></div>
+  <div class="submit-wrap">
+    <button class="btn-submit" onclick="askSubmit()">📩 تسليم الاختبار</button>
+  </div>
+</div>
+
+<div id="pgResult" class="page">
+  <div class="res-wrap">
+    <div class="res-card">
+      <div class="circle" id="rCircle"></div>
+      <div class="res-grade" id="rGrade"></div>
+      <div class="res-msg" id="rMsg"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head">📝 التغذية الراجعة التفصيلية</div>
+      <div id="fbArea"></div>
+    </div>
+    <button class="btn-blue" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:bold;margin-bottom:30px" onclick="goPage('pgHome')">🏠 العودة للرئيسية</button>
+  </div>
+</div>
+
+<div id="pgLogin" class="page">
+  <div class="login-box">
+    <h2>👨‍🏫 لوحة المعلم</h2>
+    <p>أدخل الرمز السري للدخول</p>
+    <input class="pw-input" type="password" id="pwBox" placeholder="••••••" maxlength="12" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="btn-login" onclick="tryLogin()">دخول</button>
+    <div class="login-err" id="loginErr"></div>
+    <button class="btn-gray" style="margin-top:14px" onclick="goPage('pgHome')">← رجوع</button>
+  </div>
+</div>
+
+<div id="pgTeacher" class="page">
+  <div class="t-header">
+    <h2>👨‍🏫 لوحة المعلم — عماد أبو حجيلة</h2>
+    <p>مدرسة محمد بن حمد الشرقي | مادة العلوم | الصف السابع</p>
+  </div>
+  <div class="t-body">
+    <div class="stats" id="statsArea">
+      <div class="stat"><div class="stat-n">-</div><div class="stat-l">المتقدمون</div></div>
+      <div class="stat"><div class="stat-n">-</div><div class="stat-l">المتوسط</div></div>
+      <div class="stat"><div class="stat-n">-</div><div class="stat-l">ناجح</div></div>
+      <div class="stat"><div class="stat-n">-</div><div class="stat-l">بحاجة مراجعة</div></div>
+    </div>
+    <div class="act-bar">
+      <button class="btn-xl" onclick="doExport()">📊 تصدير Excel</button>
+      <button class="btn-rf" onclick="loadResults()">🔄 تحديث</button>
+      <button class="btn-rd" onclick="askClearAll()">🗑️ مسح الكل</button>
+      <button class="btn-dk" onclick="goPage('pgHome')">← رجوع</button>
+    </div>
+    <div class="tbl-box">
+      <h3>📋 نتائج الطلاب</h3>
+      <div id="tblArea"><div class="loading">⏳ جارٍ الاتصال بقاعدة البيانات...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalWrap">
+  <div class="modal-box">
+    <h3 id="mTitle">تأكيد</h3>
+    <p id="mMsg"></p>
+    <div class="modal-btns">
+      <button class="btn-yes" id="mYes">تأكيد</button>
+      <button class="btn-no" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Firebase init (compat) =====
+var firebaseConfig = {
+  apiKey: "AIzaSyDWYQ0HcU7F9fm6IDvKFi9i0SVkv_0-4PY",
+  authDomain: "quiz-science1.firebaseapp.com",
+  projectId: "quiz-science1",
+  storageBucket: "quiz-science1.firebasestorage.app",
+  messagingSenderId: "90382167417",
+  appId: "1:90382167417:web:22b25ee21d10cff4dad3a8"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var COL = "results";
+
+// ===== بيانات الطلاب =====
+var names = {
+  "1":["احمد مجيد سعيد سالم المرشدي","جاسم محمد عبدالله الملا الريسي","حارب محمد سهيل عبيد الحفيتي","حسن محمد حسن محمد الحفيتي","حمد محمد محبوب جمعة كياني","حمدان حسين علي العبودي الطنيجي","حمدان عبدالله أحمد محمد المزروعي","حميد راشد عبيد الشميلي اليماحي","حميد عبيد محمد حميد اليماحي","خليفه مفتاح مال الله جمعه الكندي","راشد سلطان علي خميس اليماحي","راشد سيف مبارك سيف المزروعي","راشد عبيد بلال عبيد المسماري","زايد محمد الماس محمد الظنحاني","سعيد احمد حسين الشمار الكندري","سعيد محمد راشد عبيد الكعبي","سيف راشد مبارك سيف المزروعي","سيف عبدالله راشد محمد اليماحي","عبدالعزيز علي حسن علي المسماري","عبدالله احمد عيسى محمد فضل","عبدالله راشد سهيل سعيد اليماحي","علي ابراهيم عبدالله سعيد اليماحي","علي راشد علي سالم المزروعي","مايد احمد جمعه علي كياني","منصور عبدالله محمد المسماري","نايف ابراهيم عبيد حسن الشحي"],
+  "2":["أحمد عيسى محمد راشد البكر","حمدان أسد محمد نواز أحمد","زايد عبدالله علي محمد البلوشي","سيف يوسف عبدالله سالم الكندي","عامر أحمد راشد علي السعدي","عبدالرحمن علي محمد سعيد المحرزي","عبدالله سالم سيف عبيد الحفيتي","عبدالله سالم عبيد الشميلي اليماحي","عبدالله سعيد علي الحاج الحفيتي","عبيد سعيد محمد سعيد الذباحي","عزام محمد حسين محمد شاكر","علي عبيد غاصب عبيد المسماري","عمار عبدالله خميس الخال السويدي","عمر عبدالرزاق عبدالله عبدالرحمن البستكي","غيث عبيد محمد خميس اليماحي","مايد أحمد عيسى الملا العبدولي","مبارك عيسى خاطر عبدالله السعدي","محمد أحمد سيف أحمد المسماري","محمد حميد عبدالله محمد الظنحاني","محمد خلفان محمد عبدالله المطروشي","محمد راشد أحمد خميس الكعبي","محمد راشد محمد علي الكعبي","محمد عبدالله علي بن صباح الزحمي","محمد مانع سعيد عبيد الحفيتي","موسى محمود محمد موسى حسين","نهيان خالد راشد علي الكعبي","نواف راشد عبدالله راشد قيوظي","نواف صالح عثمان مبارك المسماري"],
+  "4":["احمد سالم محمد راشد الكعبي","احمد سعيد سلطان سليمان مطلعي اليماحي","تركي طلال خميس سعيد المسماري","حسين علي حسين علي رمضان","حمدان راشد مبارك مفتاح المسماري","حمدان سيف محمد عبيد المسماري","خالد محمد علي عبيد الطنيجي","خليفه بن احمد بن يعقوب بن يوسف البلوشي","ذياب هلال ناصر مطر البلوشي","راشد احمد سالم مرزوق الزحمي","سعيد حمدان سعيد عبيد المسماري","سلطان عادل سليمان علي الظنحاني","سلطان علي عبيد حسن الشحي","سيف بن ابراهيم بن درويش بن خميس الجابري","سيف سالم محمد عبيد المسماري","سيف عبدالله ربيع سالم السعيدي","عبدالله بن قاسم بن درويش بن خميس الجابري","محمد احمد خميس عامر النعيمي","محمد حمد ابراهيم يوسف ال محمد","محمد خلفان خميس سليمان مطلعي","محمد راشد عبدالله راشد الشحي","محمد علي سالم علي الكعبي","محمد محمد عبيد خديم السماحي","مشعل خالد عبدالرحيم محمد العوضي","منصور عيسى محمد عبدالله الكعبي","منصور فهد ناصر سعيد النعيمي","منصور ياسر جمعه الزري المسماري","ناصر خميس سالمين سعيد الزعابي","يحيى صالح احمد حسين القيسي"],
+  "5":["احمد راشد محمد عبدالله الحفيتي","احمد سلطان احمد محمد الحفيتي","احمد محمد خلفان راشد الكندي","حارب وليد راشد احمد الحنطوبي","حمد حمدان جلال حسين مختار","حمد محمد سعيد نويله اليماحي","خالد جاسم راشد عبدالرحمن الكندي","خالد عبيد عبيد سليمان الحوسني","خالد فايز عيسى داغر البلوشي","خليفه احمد محمد احمد الظنحاني","ذياب يوسف عبدالله الوطني آل علي","راشد محمد خميس سليمان مطلعي","زايد احمد على المطوع الكعبي","زيد محمد عبدالله محمد المسماري","سالم محمد سالم ثاني الجابري","سعيد سيد سعيد التخلوفه اليماحي","سعيد على سعيد محمد الحمودي","سليمان محمد خميس سليمان مطلعي","سليمان يونس سليمان عبدالله الحنطوبي","سيف عثمان خميس الدرعي المسماري","سيف نبيل خميس سالم هناوي","فيصل صالح حسن بارون آل علي","محمد حمد على دويب الحمودي","محمد زايد على نصيب عريدي","محمد سعيد محمد علي الحنطوبي","محمد صالح محمد شاكر ال محمد","محمد على عبدالله على الكندي","محمد ناصر خميس محمد المطروشي","نهيان محمد سليمان عبدالله الحنطوبي"]
+};
+
+// ===== الأسئلة =====
+var rawQ = [
+  {u:"النباتات",q:"أي العضيات تُعدّ الموقع الرئيسي للبناء الضوئي في الخلية النباتية؟",o:["البلاستيدات الخضراء","الميتوكوندريا","الفجوة المركزية","جدار الخلية"],c:0},
+  {u:"النباتات",q:"ما الوظيفة الأساسية لأشباه الجذور في النباتات اللاوعائية كالحزازيات؟",o:["تثبيت النبات في السطح","نقل الماء لمسافات طويلة","إنتاج الأبواغ للتكاثر","تصنيع الغذاء بالبناء الضوئي"],c:0},
+  {u:"النباتات",q:"ما اسم الفترة التي تتوقف فيها البذرة عن النمو حتى تتحسن الظروف البيئية؟",o:["السبات (الكمون)","التلقيح","الإنبات","الإخصاب"],c:0},
+  {u:"النباتات",q:"التفاف سيقان اللبلاب حول عمود مجاور يمثل استجابة تسمى:",o:["الانتحاء اللمسي","الانتحاء الضوئي","الانتحاء الأرضي","الانتحاء المائي"],c:0},
+  {u:"الفضاء",q:"أول قمر صناعي أطلقه الاتحاد السوفيتي إلى الفضاء هو:",o:["سبوتنيك 1","أبولو 11","هابل","المستكشف 1"],c:0},
+  {u:"الفضاء",q:"ما الميزة الأساسية للتلسكوبات الفضائية مقارنةً بالأرضية؟",o:["فوق الغلاف الجوي مما يمنع تشويه الضوء","قربها الشديد من النجوم","حجمها أكبر بآلاف المرات","لا تحتاج طاقة"],c:0},
+  {u:"الجيولوجيا",q:"ما الذي يُحرّك الصفائح الصخرية فوق الوشاح وفق نظرية التكتونية؟",o:["تيارات الحمل الحراري في الوشاح","الجاذبية المغناطيسية للقطبين","قوة الرياح والمياه","دوران الأرض حول محورها"],c:0},
+  {u:"الجيولوجيا",q:"ما المظهر الجيولوجي المتوقع عند تصادم صفيحتين قاريتين؟",o:["سلاسل الجبال الضخمة","أودية الانهدام المتصدعة","قيعان بحار جديدة","الجزر المرجانية"],c:0},
+  {u:"الجيولوجيا",q:"تفتت الصخور بسبب توسع جذور الأشجار دون تغيير تركيبها الكيميائي يُعدّ:",o:["تجوية ميكانيكية (فيزيائية)","تجوية كيميائية","تعرية برية","ترسيب فتاتي"],c:0},
+  {u:"الجيولوجيا",q:"ما الفرق الجوهري بين التعرية والترسيب؟",o:["التعرية نقل الفتات والترسيب استقراره في مكان جديد","التعرية تفتيت الصخور والترسيب نقلها","التعرية تبني معالم والترسيب يهدمها","التعرية بالمياه فقط والترسيب بالرياح"],c:0},
+  {u:"الغلاف الجوي",q:"التروبوسفير هي الطبقة التي:",o:["تحدث فيها ظواهر الطقس وتحتوي معظم بخار الماء","تحتوي طبقة الأوزون الواقية","ترتفع فيها الحرارة وتسبح فيها الأقمار","تكون خالية من الغازات"],c:0},
+  {u:"الغلاف الجوي",q:"ما الجهاز المستخدم لقياس الضغط الجوي؟",o:["الباروميتر","الأنيموميتر","الهيدروميتر","الثيرموميتر"],c:0},
+  {u:"الغلاف الجوي",q:"ما اسم السحب الركامية الضخمة المصحوبة بأمطار غزيرة وبرق ورعد؟",o:["المزن الركامية (Cumulonimbus)","السحب الريشية (Cirrus)","السحب الطبقية (Stratus)","السحب الركامية المنخفضة"],c:0},
+  {u:"الغلاف الجوي",q:"العامل الذي يحدد شدة الإعصار القمعي (Tornado) عند قياسه:",o:["سرعة الرياح الدائرية داخله","كمية الأمطار الهاطلة","درجة حرارة الهواء المحيط","نسبة الرطوبة في مركز القمع"],c:0},
+  {u:"الغلاف الجوي",q:"فرضية نقل الأوزون من الستراتوسفير إلى التروبوسفير — كيف تقيّمها؟",o:["خاطئة؛ الأوزون في التروبوسفير ملوث سام للإنسان والنبات","صحيحة؛ يزيد الأكسجين ويسرّع البناء الضوئي","خاطئة؛ ثقل الأوزون يرفع الضغط لحد خانق","صحيحة؛ يمنع تشكل الطقس القاسي"],c:0}
+];
+
+var LBL=["أ","ب","ج","د"], PASS="emad2024";
+var curName="",curCls="",userAns={},timerID=null,secLeft=2100,quizQ=[],modalCB=null,cached=[];
+
+// ===== التنقل =====
+function goPage(id) {
+  var all = document.querySelectorAll(".page");
+  for(var i=0;i<all.length;i++) all[i].style.display="none";
+  var el = document.getElementById(id);
+  if(id==="pgHome"||id==="pgLogin") el.style.display="flex";
+  else el.style.display="block";
+  if(id==="pgLogin"){document.getElementById("pwBox").value="";document.getElementById("loginErr").textContent="";}
+  if(id==="pgTeacher") loadResults();
+}
+
+// ===== كشف الطلاب =====
+function loadNames(){
+  var cls=document.getElementById("selCls").value;
+  var sel=document.getElementById("selName");
+  sel.innerHTML="<option value=''>-- اختر اسمك --</option>";
+  document.getElementById("btnGo").disabled=true;
+  if(!cls){sel.disabled=true;return;}
+  var list=names[cls];
+  for(var i=0;i<list.length;i++){
+    var o=document.createElement("option");
+    o.value=list[i];o.textContent=list[i];sel.appendChild(o);
+  }
+  sel.disabled=false;
+}
+
+// ===== بدء الاختبار =====
+function beginQuiz(){
+  var cls=document.getElementById("selCls").value;
+  var nm=document.getElementById("selName").value;
+  if(!cls||!nm) return;
+  var btn=document.getElementById("btnGo");
+  btn.disabled=true; btn.textContent="⏳ جارٍ التحقق...";
+  db.collection(COL).where("name","==",nm).where("cls","==",cls).get().then(function(snap){
+    if(!snap.empty){
+      alert("قدّمت هذا الاختبار مسبقاً ولا يمكن إعادته.");
+      btn.disabled=false; btn.textContent="🚀 ابدأ الاختبار";
+      return;
+    }
+    curName=nm; curCls=cls; userAns={};
+    quizQ=[];
+    for(var i=0;i<rawQ.length;i++) quizQ.push(shuffle(rawQ[i]));
+    document.getElementById("lblName").textContent="الطالب: "+nm;
+    buildQ();
+    goPage("pgQuiz");
+    startTimer();
+    btn.disabled=false; btn.textContent="🚀 ابدأ الاختبار";
+  }).catch(function(e){
+    console.error(e);
+    alert("تعذر التحقق. تحقق من الاتصال.");
+    btn.disabled=false; btn.textContent="🚀 ابدأ الاختبار";
+  });
+}
+
+function shuffle(q){
+  var p=[];
+  for(var i=0;i<q.o.length;i++) p.push({t:q.o[i],r:(i===q.c)});
+  for(var i=p.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=p[i];p[i]=p[j];p[j]=tmp;}
+  var o=[],c=0;
+  for(var i=0;i<p.length;i++){o.push(p[i].t);if(p[i].r)c=i;}
+  return {u:q.u,q:q.q,o:o,c:c};
+}
+
+function buildQ(){
+  var h="";
+  for(var i=0;i<quizQ.length;i++){
+    var q=quizQ[i];
+    h+='<div class="q-card"><div class="q-tag">السؤال '+(i+1)+' من 15</div>';
+    h+='<div class="q-unit">وحدة: '+q.u+'</div><div class="q-txt">'+q.q+'</div>';
+    h+='<div class="opts">';
+    for(var j=0;j<q.o.length;j++){
+      h+='<div class="opt" id="op'+i+'_'+j+'" onclick="pick('+i+','+j+')">';
+      h+='<div class="opt-lbl">'+LBL[j]+'</div><span>'+q.o[j]+'</span></div>';
+    }
+    h+='</div></div>';
+  }
+  document.getElementById("qArea").innerHTML=h;
+}
+
+function pick(qi,oi){
+  userAns[qi]=oi;
+  for(var j=0;j<4;j++){var e=document.getElementById("op"+qi+"_"+j);if(e)e.className="opt"+(j===oi?" picked":"");}
+  var d=Object.keys(userAns).length;
+  document.getElementById("progTxt").textContent=d+" / 15 سؤال";
+  document.getElementById("progFill").style.width=Math.round(d/15*100)+"%";
+}
+
+function startTimer(){
+  secLeft=2100;
+  if(timerID) clearInterval(timerID);
+  timerID=setInterval(function(){
+    secLeft--;
+    var m=Math.floor(secLeft/60),s=secLeft%60;
+    var el=document.getElementById("clock");
+    el.textContent=(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+    el.className=secLeft<=300?"timer red":"timer";
+    if(secLeft<=0){clearInterval(timerID);doSubmit();}
+  },1000);
+}
+
+function askSubmit(){
+  var d=Object.keys(userAns).length,l=15-d;
+  openModal("تأكيد التسليم",l>0?"لم تجب على "+l+" سؤال. هل تريد التسليم؟":"هل أنت متأكد من التسليم؟",doSubmit);
+}
+
+function doSubmit(){
+  closeModal();
+  if(timerID) clearInterval(timerID);
+  var score=0;
+  for(var i=0;i<quizQ.length;i++) if(userAns[i]===quizQ[i].c) score++;
+  var pct=Math.round(score/15*100);
+  var ca=[],op=[];
+  for(var i=0;i<quizQ.length;i++){ca.push(quizQ[i].c);op.push(quizQ[i].o.slice());}
+  var rec={name:curName,cls:curCls,score:score,pct:pct,
+    ans:JSON.parse(JSON.stringify(userAns)),correct:ca,opts:op,
+    date:new Date().toLocaleString("ar-AE"),ts:Date.now()};
+  toast("⏳ جارٍ حفظ النتيجة...");
+  db.collection(COL).add(rec).then(function(){
+    toast("✅ تم حفظ النتيجة بنجاح");
+    showResult(rec);
+  }).catch(function(e){
+    console.error(e);
+    toast("⚠️ خطأ في الحفظ: "+e.code);
+    showResult(rec);
+  });
+}
+
+function showResult(rec){
+  var c=document.getElementById("rCircle");
+  c.textContent=rec.score+"/15"; c.className="circle";
+  var gr,msg,cl;
+  if(rec.pct>=90){cl="c-e";gr="ممتاز 🌟";msg="أداء رائع! استمر في التميز.";}
+  else if(rec.pct>=75){cl="c-g";gr="جيد جداً 👍";msg="أداء جيد، يمكنك الوصول للامتياز!";}
+  else if(rec.pct>=60){cl="c-a";gr="جيد 📚";msg="راجع المواد التي أخطأت فيها.";}
+  else{cl="c-f";gr="بحاجة لمراجعة 📖";msg="لا تيأس، راجع الدروس مع معلمك.";}
+  c.classList.add(cl);
+  document.getElementById("rGrade").textContent=gr+" | "+rec.pct+"%";
+  document.getElementById("rMsg").textContent=msg;
+  var fb="";
+  for(var i=0;i<rawQ.length;i++){
+    var ua=rec.ans[i],ca=rec.correct[i],ok=(ua===ca);
+    fb+='<div class="fb-item '+(ok?"fb-ok":"fb-no")+'">';
+    fb+='<div class="fb-q">'+(i+1)+'. '+rawQ[i].q+'</div>';
+    if(!ok){var yt=(ua!==undefined&&ua!==null)?LBL[ua]+" — "+rec.opts[i][ua]:"لم تجب";
+      fb+='<div class="fb-a wrong-a">❌ إجابتك: '+yt+'</div>';}
+    fb+='<div class="fb-a right-a">✅ الصحيحة: '+LBL[ca]+" — "+rec.opts[i][ca]+'</div></div>';
+  }
+  document.getElementById("fbArea").innerHTML=fb;
+  goPage("pgResult");
+}
+
+// ===== المعلم =====
+function tryLogin(){
+  var pw=document.getElementById("pwBox").value;
+  if(pw===PASS){goPage("pgTeacher");}
+  else{document.getElementById("loginErr").textContent="❌ الرمز غير صحيح";
+    document.getElementById("pwBox").value="";document.getElementById("pwBox").focus();}
+}
+
+function loadResults(){
+  document.getElementById("tblArea").innerHTML='<div class="loading">⏳ جارٍ تحميل النتائج...</div>';
+  db.collection(COL).orderBy("ts","asc").get().then(function(snap){
+    cached=[];
+    snap.forEach(function(d){var r=d.data();r._id=d.id;cached.push(r);});
+    renderTable(cached);
+  }).catch(function(e){
+    console.error(e);
+    document.getElementById("tblArea").innerHTML='<div class="err-msg">❌ خطأ في التحميل: '+e.message+'<br>تأكد من قواعد Firestore</div>';
+    renderStats([]);
+  });
+}
+
+function renderTable(arr){
+  renderStats(arr);
+  var ta=document.getElementById("tblArea");
+  if(!arr.length){ta.innerHTML='<div class="no-res">لا توجد نتائج بعد</div>';return;}
+  var rows="";
+  for(var i=0;i<arr.length;i++){
+    var r=arr[i];
+    var bc=r.pct>=90?"be":r.pct>=75?"bg":r.pct>=60?"ba":"bf";
+    var gr=r.pct>=90?"ممتاز":r.pct>=75?"جيد جداً":r.pct>=60?"جيد":"ضعيف";
+    rows+='<tr><td>'+(i+1)+'</td><td><b>'+r.name+'</b></td><td>'+r.cls+'</td>'+
+      '<td>'+r.score+'/15</td><td><span class="bdg '+bc+'">'+r.pct+'%</span></td>'+
+      '<td>'+gr+'</td><td style="font-size:11px">'+r.date+'</td>'+
+      '<td><button class="btn-del" data-id="'+r._id+'">حذف</button></td></tr>';
+  }
+  ta.innerHTML='<table><thead><tr><th>#</th><th>الاسم</th><th>الشعبة</th><th>الدرجة</th><th>النسبة</th><th>التقدير</th><th>التاريخ</th><th>حذف</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var btns=ta.querySelectorAll(".btn-del");
+  for(var k=0;k<btns.length;k++){
+    (function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute("data-id");
+        openModal("حذف النتيجة","هل تريد حذف نتيجة هذا الطالب؟",function(){
+          closeModal();
+          db.collection(COL).doc(id).delete().then(function(){toast("✅ تم الحذف");loadResults();})
+          .catch(function(e){toast("❌ خطأ: "+e.message);});
+        });
+      };
+    })(btns[k]);
+  }
+}
+
+function renderStats(arr){
+  var total=arr.length,sumP=0,passed=0;
+  for(var i=0;i<arr.length;i++){sumP+=arr[i].pct;if(arr[i].pct>=60)passed++;}
+  var avg=total?Math.round(sumP/total):0;
+  document.getElementById("statsArea").innerHTML=
+    '<div class="stat"><div class="stat-n">'+total+'</div><div class="stat-l">المتقدمون</div></div>'+
+    '<div class="stat"><div class="stat-n">'+avg+'%</div><div class="stat-l">المتوسط</div></div>'+
+    '<div class="stat"><div class="stat-n">'+passed+'</div><div class="stat-l">ناجح (60%+)</div></div>'+
+    '<div class="stat"><div class="stat-n">'+(total-passed)+'</div><div class="stat-l">بحاجة مراجعة</div></div>';
+}
+
+function askClearAll(){
+  openModal("مسح جميع النتائج","سيتم حذف جميع النتائج نهائياً. هل أنت متأكد؟",function(){
+    closeModal();toast("⏳ جارٍ المسح...");
+    db.collection(COL).get().then(function(snap){
+      var batch=db.batch();
+      snap.forEach(function(d){batch.delete(d.ref);});
+      return batch.commit();
+    }).then(function(){toast("✅ تم مسح جميع النتائج");loadResults();})
+    .catch(function(e){toast("❌ خطأ: "+e.message);});
+  });
+}
+
+function doExport(){
+  if(!cached.length){alert("لا توجد نتائج للتصدير");return;}
+  var hdr=["#","الاسم","الشعبة","الدرجة","من","النسبة","التقدير","التاريخ"];
+  for(var q=0;q<rawQ.length;q++) hdr.push("س"+(q+1));
+  var rows=[hdr];
+  for(var i=0;i<cached.length;i++){
+    var r=cached[i];
+    var gr=r.pct>=90?"ممتاز":r.pct>=75?"جيد جداً":r.pct>=60?"جيد":"ضعيف";
+    var row=[i+1,r.name,"الشعبة "+r.cls,r.score,15,r.pct+"%",gr,r.date];
+    for(var qi=0;qi<rawQ.length;qi++){
+      row.push(r.ans&&r.correct&&r.ans[qi]!==undefined&&r.ans[qi]===r.correct[qi]?"✓":"✗");
+    }
+    rows.push(row);
+  }
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,"النتائج");
+  XLSX.writeFile(wb,"نتائج_علوم_سابع.xlsx");
+}
+
+// ===== مودال =====
+function openModal(title,msg,cb){
+  document.getElementById("mTitle").textContent=title;
+  document.getElementById("mMsg").textContent=msg;
+  modalCB=cb;
+  document.getElementById("modalWrap").style.display="flex";
+  document.getElementById("mYes").onclick=function(){if(modalCB)modalCB();};
+}
+function closeModal(){document.getElementById("modalWrap").style.display="none";modalCB=null;}
+
+function toast(msg){
+  var t=document.getElementById("toast");
+  t.textContent=msg;t.style.display="block";
+  clearTimeout(t._tid);
+  t._tid=setTimeout(function(){t.style.display="none";},3000);
+}
+
+// ===== بداية =====
+goPage("pgHome");
+</script>
+</body>
+</html>
